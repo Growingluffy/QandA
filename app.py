@@ -1,6 +1,19 @@
-from flask import Flask, render_template
+import os
+from flask import Flask, render_template, g
+from database import get_db
 
 app = Flask(__name__)
+app.config.from_object(os.environ['APP_SETTINGS'])
+
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, 'postgres_db_cur'):
+        g.postgres_db_cur.close()
+
+    if hasattr(g, 'postgres_db_conn'):
+        g.postgres_db_conn.close()
+
 
 @app.route('/')
 def index():
@@ -42,5 +55,5 @@ def users():
     return render_template('users.html')
 
 
-if __name__== '__main__':
+if __name__ == '__main__':
     app.run(debug=True)
