@@ -6,7 +6,7 @@ class Config(object):
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
-    SECRET_KEY = '12345678'
+    SECRET_KEY = os.urandom(24)
     # DATABASE_URL = os.environ['DATABASE_URL']
 
 
