@@ -93,11 +93,21 @@ def answer():
     return render_template('answer.html', user=user)
 
 
-@app.route('/ask')
+@app.route('/ask', methods=['GET', 'POST'])
 def ask():
     user = get_current_user()
 
-    return render_template('ask.html', user=user)
+    db = get_db()
+
+    if request.method == 'POST':
+        db.execute('INSERT INTO questions (question_text, asked_by_id, expert_id) values (%s, %s, %s)', (request.form['question'], user['id'], request.form['expert'], ))
+
+        return redirect(url_for('index'))
+
+    db.execute('SELECT id, name from users where expert = True')
+    expert_results = db.fetchall()
+
+    return render_template('ask.html', user=user, experts=expert_results)
 
 
 @app.route('/unanswered')
@@ -111,7 +121,19 @@ def unanswered():
 def users():
     user = get_current_user()
 
-    return render_template('users.html', user=user)
+    db = get_db()
+    db.execute('SELECT id, name, expert, admin from users')
+    users_result = db.fetchall()
+
+    return render_template('users.html', user=user, users=users_result)
+
+
+@app.route('/promote/<user_id>')
+def promote(user_id):
+    db = get_db()
+    db.execute('update users set expert = True where id = %s', (user_id, ))
+    return redirect(url_for('users'))
+
 
 
 @app.route('/logout')

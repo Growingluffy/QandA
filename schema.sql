@@ -6,10 +6,10 @@ CREATE TABLE users (
   admin boolean not null
 );
 
-CREATE TABLE question (
+CREATE TABLE questions (
   id serial primary key,
   question_text text not null,
-  answer_text text not null,
+  answer_text text,
   asked_by_id integer not null,
   expert_id integer not null
 );
