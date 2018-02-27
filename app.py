@@ -48,7 +48,7 @@ def register():
 
         db.execute('INSERT INTO users (name, password, expert, admin) values (%s, %s, %s, %s)', (request.form['name'], hashed_password, '0', '0', ))
 
-        session['user'] = request.form['user']
+        session['user'] = request.form['name']
 
         return redirect(url_for('index'))
 
