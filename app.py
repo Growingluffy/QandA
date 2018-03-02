@@ -34,7 +34,19 @@ def get_current_user():
 def index():
     user = get_current_user()
 
-    return render_template('home.html', user=user)
+    db = get_db()
+    db.execute('''select
+                            questions.id as question_id,
+                                      questions.question_text,
+                                      askers.name as asker_name,
+                                      experts.name as expert_name
+                                  from questions
+                                  join users as askers on askers.id = questions.asked_by_id
+                                  join users as experts on experts.id = questions.expert_id
+                                  where questions.answer_text is not null''')
+    questions_result = db.fetchall()
+
+    return render_template('home.html', user=user, questions=questions_result)
 
 
 @app.route('/register', methods=['POST', 'GET'])
@@ -86,11 +98,21 @@ def question():
     return render_template('question.html', user=user)
 
 
-@app.route('/answer')
-def answer():
+@app.route('/answer/<question_id>', methods=['GET', 'POST'])
+def answer(question_id):
     user = get_current_user()
 
-    return render_template('answer.html', user=user)
+    db = get_db()
+
+    if request.method == 'POST':
+        db.execute('update questions set answer_text = %s where id = %s', (request.form['answer'], question_id, ))
+
+        return redirect(url_for('unanswered'))
+
+    db.execute('select id, question_text from questions where id = %s', (question_id, ))
+    question = db.fetchone()
+
+    return render_template('answer.html', user=user, question=question)
 
 
 @app.route('/ask', methods=['GET', 'POST'])
