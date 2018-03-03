@@ -56,6 +56,13 @@ def register():
     if request.method == 'POST':
 
         db = get_db()
+
+        db.execute('SELECT id from users where name = %s', (request.form['name'], ))
+        existing_user = db.fetchone()
+
+        if existing_user:
+            return render_template('register.html', user=user, error='Benutzer existiert bereits!')
+
         hashed_password = generate_password_hash(request.form['password'], method='sha256')
 
         db.execute('INSERT INTO users (name, password, expert, admin) values (%s, %s, %s, %s)', (request.form['name'], hashed_password, '0', '0', ))
@@ -114,6 +121,10 @@ def question(question_id):
 def answer(question_id):
     user = get_current_user()
 
+    if not user:
+        return redirect(url_for('login'))
+
+
     db = get_db()
 
     if request.method == 'POST':
@@ -130,6 +141,10 @@ def answer(question_id):
 @app.route('/ask', methods=['GET', 'POST'])
 def ask():
     user = get_current_user()
+
+    if not user:
+        return redirect(url_for('login'))
+
 
     db = get_db()
 
@@ -148,6 +163,10 @@ def ask():
 def unanswered():
     user = get_current_user()
 
+    if not user:
+        return redirect(url_for('login'))
+
+
     db = get_db()
     db.execute('SELECT questions.id, questions.question_text, users.name from questions join users on users.id = questions.asked_by_id where questions.answer_text is null and questions.expert_id = %s', (user['id'], ))
     questions = db.fetchall()
@@ -159,6 +178,9 @@ def unanswered():
 def users():
     user = get_current_user()
 
+    if not user:
+        return redirect(url_for('login'))
+
     db = get_db()
     db.execute('SELECT id, name, expert, admin from users')
     users_result = db.fetchall()
@@ -168,6 +190,11 @@ def users():
 
 @app.route('/promote/<user_id>')
 def promote(user_id):
+    user = get_current_user()
+
+    if not user:
+        return redirect(url_for('login'))
+
     db = get_db()
     db.execute('update users set expert = True where id = %s', (user_id, ))
     return redirect(url_for('users'))
