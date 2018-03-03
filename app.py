@@ -77,6 +77,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     user = get_current_user()
+    error = None
 
     if request.method == 'POST':
 
@@ -88,14 +89,17 @@ def login():
         db.execute('SELECT id, name, password from users where name = %s', (name, ))
         user_result = db.fetchone()
 
-        if check_password_hash(user_result['password'], password):
-            session['user'] = user_result['name']
-            return redirect(url_for('index'))
+        if user_result:
+
+            if check_password_hash(user_result['password'], password):
+                session['user'] = user_result['name']
+                return redirect(url_for('index'))
+            else:
+                error = 'Das Password ist falsch'
         else:
-            return '<h1>The password is incorrect!</h1>'
+            error = 'Der Benutzername ist falsch'
 
-
-    return render_template('login.html', user=user)
+    return render_template('login.html', user=user, error=error)
 
 
 @app.route('/question/<question_id>')
@@ -124,6 +128,8 @@ def answer(question_id):
     if not user:
         return redirect(url_for('login'))
 
+    if not user['admin']:
+        return redirect(url_for('index'))
 
     db = get_db()
 
@@ -145,7 +151,6 @@ def ask():
     if not user:
         return redirect(url_for('login'))
 
-
     db = get_db()
 
     if request.method == 'POST':
@@ -166,6 +171,9 @@ def unanswered():
     if not user:
         return redirect(url_for('login'))
 
+    if not user['admin']:
+        return redirect(url_for('index'))
+
 
     db = get_db()
     db.execute('SELECT questions.id, questions.question_text, users.name from questions join users on users.id = questions.asked_by_id where questions.answer_text is null and questions.expert_id = %s', (user['id'], ))
@@ -181,6 +189,9 @@ def users():
     if not user:
         return redirect(url_for('login'))
 
+    if not user['admin']:
+        return redirect(url_for('index'))
+
     db = get_db()
     db.execute('SELECT id, name, expert, admin from users')
     users_result = db.fetchall()
@@ -194,6 +205,9 @@ def promote(user_id):
 
     if not user:
         return redirect(url_for('login'))
+
+    if not user['admin']:
+        return redirect(url_for('index'))
 
     db = get_db()
     db.execute('update users set expert = True where id = %s', (user_id, ))
