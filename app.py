@@ -128,7 +128,7 @@ def answer(question_id):
     if not user:
         return redirect(url_for('login'))
 
-    if not user['admin']:
+    if not user['expert'] and user['admin']:
         return redirect(url_for('index'))
 
     db = get_db()
@@ -171,7 +171,7 @@ def unanswered():
     if not user:
         return redirect(url_for('login'))
 
-    if not user['admin']:
+    if not user['expert'] and user['admin']:
         return redirect(url_for('index'))
 
 
